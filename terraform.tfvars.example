@@ -1,0 +1,82 @@
+# ==============================================================================
+#  akamai-network-lists — terraform.tfvars
+# ==============================================================================
+#  Copy this file to `terraform.tfvars`, set the values, then run:
+#      tofu init && tofu apply        (or:  terraform init && terraform apply)
+#
+# AUTHENTICATION — Akamai:
+#   The Akamai provider (source akamai/akamai) authenticates with EdgeGrid
+#   credentials — a four-part API-client credential (host, client_token,
+#   client_secret, access_token) created in Akamai Control Center (Identity &
+#   Access > API clients).
+#   Environment variables Terraform reads:
+#     AKAMAI_HOST — EdgeGrid base hostname (no protocol) for the default section
+#     AKAMAI_ACCESS_TOKEN  (secret) — EdgeGrid access token (default section)
+#     AKAMAI_CLIENT_TOKEN  (secret) — EdgeGrid client token (default section)
+#     AKAMAI_CLIENT_SECRET  (secret) — EdgeGrid client secret (default section)
+#     AKAMAI_{SECTION}_HOST — Per-section host, e.g. AKAMAI_PAPI_HOST for a [papi] section
+#   Full guide (auth + remote state):  docs/CONNECTING-PROVIDERS.md#akamai
+#
+#  Secrets below read "REPLACE_ME" — never commit real secrets. Prefer
+#  TF_VAR_<name> environment variables or a secrets manager.
+#  Status: static-validated, live-test pending (see README.md).
+# ==============================================================================
+
+
+# ------------------------------------------------------------------------------
+#  REQUIRED — you must set these
+# ------------------------------------------------------------------------------
+
+# network_lists  —  map  (REQUIRED)
+#   Constraint: Provide at least one network list.
+network_lists = {
+  # Deny-by-default IP blocklist (REPLACE — Terraform owns the contents).
+  ip_blocklist = {
+    name        = "iacbazaar-ip-blocklist"
+    type        = "IP"
+    description = "Known-bad IPs and CIDRs."
+    entries     = ["198.51.100.0/24", "203.0.113.7"]
+  }
+
+  # Geo blocklist by ISO country code.
+  geo_blocklist = {
+    name        = "iacbazaar-geo-blocklist"
+    type        = "GEO"
+    description = "Embargoed / high-abuse regions."
+    entries     = ["KP", "RU"]
+  }
+}
+
+# ------------------------------------------------------------------------------
+#  OPTIONAL — defaults shown; uncomment a line to override
+# ------------------------------------------------------------------------------
+
+# contract_id  —  string  (optional, default: null)
+#   Default Akamai contract ID for lists that do not set their own (with or
+#   without the ctr_ prefix). Optional; the API can infer it for some accounts.
+contract_id = "ctr_C-0000000"
+
+# group_id  —  string  (optional, default: null)
+#   Default Akamai group ID for lists that do not set their own (with or without
+#   the grp_ prefix). Optional; the API can infer it for some accounts.
+group_id    = "grp_000000"
+
+# activate  —  bool  (optional, default: false)
+#   Activate each managed list after changes. Off by default so the first apply
+#   only stages list contents; flip on (with notification_emails) to push live.
+activate = false
+
+# activation_network  —  string  (optional, default: "STAGING")
+#   Network the activation targets: STAGING (safe default) or PRODUCTION.
+#   Constraint: activation_network must be STAGING or PRODUCTION.
+# activation_network = "STAGING"
+
+# activation_notes  —  string  (optional, default: "Activated by Terraform (IaC Bazaar).")
+#   Note recorded on each activation.
+# activation_notes = "Activated by Terraform (IaC Bazaar)."
+
+# notification_emails  —  list  (optional, default: [])
+#   Email addresses notified about activation progress. Required when activate =
+#   true.
+#   Constraint: notification_emails must be valid email addresses.
+# notification_emails = []
